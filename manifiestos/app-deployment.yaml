@@ -24,7 +24,7 @@ spec:
           echo "MySQL is ready!"
       containers:  # <-- Solo el container principal
       - name: testmain
-        image: ghcr.io/maikhb/testmain:604135063248d9d2ce058c08d29948d3ca97ff16
+        image: ghcr.io/maikhb/testmain:39e4d34437dbfa3ca519177cb1bd9dc9f35580d2
 
         ports:
         - containerPort: 9000

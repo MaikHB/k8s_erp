@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testmain-app
+spec:
+  selector:
+    matchLabels:
+      app: testmain
+  template:
+    metadata:
+      labels:
+        app: testmain
+    spec:
+      initContainers:  # <-- Aquí va el initContainer
+      - name: wait-for-mysql
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          until nc -zv mysql-service 3306; do
+            echo "Waiting for MySQL..."
+            sleep 5
+          done
+          echo "MySQL is ready!"
+      containers:  # <-- Solo el container principal
+      - name: testmain
+        image: ghcr.io/maikhb/testmain:604135063248d9d2ce058c08d29948d3ca97ff16
+
+        ports:
+        - containerPort: 9000
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_DATASOURCE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: MYSQL_PASSWORD
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 9000
+          initialDelaySeconds: 60  # Aumenté el tiempo
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 9000
+          initialDelaySeconds: 45  # Aumenté el tiempo
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3

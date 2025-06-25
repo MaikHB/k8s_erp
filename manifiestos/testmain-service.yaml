@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: testmain-service
+spec:
+  selector:
+    app: testmain
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9000
+      # Sin nodePort - Kubernetes asigna uno automáticamente
+  type: NodePort
